@@ -21,7 +21,7 @@ app.use(cookieparser())
 
 app.use(require('./app/routes/index'))
 
-const port = process.env.PORT || 5005
+const port = process.env.PORT || 4000
 
 server.listen(port, (err) => {
   if (err) console.log(`failed to start the server ${err}`)
