@@ -1,11 +1,11 @@
 {
   "info": {
     "name": "Indian Name Blog",
-    "description": "Full test collection for the Indian Name Blog with Secret-Key Controlled API Access.\n\nBase URL: http://localhost:5005\n\n**Flow:**\n1. Register Admin\n2. Admin Login (saves adminToken automatically)\n3. Admin creates Writer\n4. Writer Login (saves writerToken automatically)\n5. User Register → User Login (saves userToken automatically)\n6. Test blog CRUD via single /blog endpoint",
+    "description": "Full test collection for the Indian Name Blog with Secret-Key Controlled API Access.\n\nBase URL: http://localhost:4000\n\n**Flow:**\n1. Register Admin\n2. Admin Login (saves adminToken automatically)\n3. Admin creates Writer\n4. Writer Login (saves writerToken automatically)\n5. User Register → User Login (saves userToken automatically)\n6. Test blog CRUD via single /blog endpoint\n7. User Like/Comment on blogs",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl",               "value": "http://localhost:5005",          "type": "string" },
+    { "key": "baseUrl",               "value": "http://localhost:4000",          "type": "string" },
     { "key": "adminToken",            "value": "",                               "type": "string" },
     { "key": "adminRefreshToken",     "value": "",                               "type": "string" },
     { "key": "writerToken",           "value": "",                               "type": "string" },
@@ -111,21 +111,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"currentPassword\": \"Admin@1234\",\n  \"newPassword\": \"Admin@5678\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Create Writer",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
-            ],
-            "url": { "raw": "{{baseUrl}}/admin/create-writer", "host": ["{{baseUrl}}"], "path": ["admin","create-writer"] },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"writerName\": \"Ishan Gupta\",\n  \"email\": \"writer@indiannameblog.com\",\n  \"password\": \"Writer@1234\"\n}"
             }
           }
         }
@@ -535,7 +520,7 @@
     },
 
     {
-      "name": "👤 User — Public Blog (Single Endpoint)",
+      "name": "👤 User — Blog Interactions",
       "item": [
         {
           "name": "Get All Published Blogs (Public)",
@@ -551,6 +536,40 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{baseUrl}}/user/blog/{{blogId}}", "host": ["{{baseUrl}}"], "path": ["user","blog","{{blogId}}"] }
+          }
+        },
+        {
+          "name": "Like / Unlike Blog",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/user/blog/{{blogId}}/like", "host": ["{{baseUrl}}"], "path": ["user","blog","{{blogId}}","like"] },
+            "body": { "mode": "raw", "raw": "" }
+          }
+        },
+        {
+          "name": "Add Comment to Blog",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{userToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/user/blog/{{blogId}}/comment", "host": ["{{baseUrl}}"], "path": ["user","blog","{{blogId}}","comment"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is a great blog about Indian culture!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Blog Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/user/blog/{{blogId}}/comments", "host": ["{{baseUrl}}"], "path": ["user","blog","{{blogId}}","comments"] }
           }
         }
       ]

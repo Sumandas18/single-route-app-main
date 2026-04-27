@@ -32,6 +32,8 @@ const BlogSchema = new mongoose.Schema(
       ref: "Admin",
       default: null,
     },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    commentCount: { type: Number, default: 0 },
   },
   { timestamps: true, versionKey: false },
 );

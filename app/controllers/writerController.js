@@ -38,6 +38,7 @@ const buildBlogPipeline = (matchStage = null) => {
             else: null,
           },
         },
+        likesCount: { $size: { $ifNull: ['$likes', []] } },
       },
     },
     { $project: { adminAuthor: 0, writerAuthor: 0, categoryInfo: 0 } },

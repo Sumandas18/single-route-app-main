@@ -39,6 +39,7 @@ const buildBlogPipeline = (matchStage = null) => {
             else: null,
           },
         },
+        likesCount: { $size: { $ifNull: ['$likes', []] } },
       },
     },
     { $project: { adminAuthor: 0, writerAuthor: 0, categoryInfo: 0 } },
@@ -114,20 +115,6 @@ class adminController {
       const admin = await AdminModel.findById(req.admin.userId)
       if (admin) { admin.refreshToken = null; await admin.save() }
       return res.status(200).json({ success: true, message: 'Logged out successfully' })
-    } catch (err) {
-      return res.status(500).json({ success: false, message: err.message })
-    }
-  }
-
-  async writerRegister(req, res) {
-    try {
-      const { writerName, email, password } = req.body
-      const exists = await WriterModel.findOne({ email })
-      if (exists) return res.status(409).json({ success: false, message: 'Email already registered' })
-      const hashed = await bcrypt.hash(password, 10)
-      const hashedApiKey = await bcrypt.hash(process.env.WRITER_BLOG_API_SECRET_KEY, 10)
-      await WriterModel.create({ writerName, email, password: hashed, apiKey: hashedApiKey })
-      return res.status(201).json({ success: true, message: 'Writer created successfully' })
     } catch (err) {
       return res.status(500).json({ success: false, message: err.message })
     }

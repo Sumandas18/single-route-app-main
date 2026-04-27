@@ -2,7 +2,9 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const UserModel = require('../models/user')
 const BlogModel = require('../models/blog')
+const CommentModel = require('../models/comment')
 const mongoose = require('mongoose')
+const { notifyWriter } = require('../config/websocket')
 
 const buildPublicBlogPipeline = (matchStage = null) => {
   const pipeline = []
@@ -40,6 +42,7 @@ const buildPublicBlogPipeline = (matchStage = null) => {
             else: null,
           },
         },
+        likesCount: { $size: { $ifNull: ['$likes', []] } },
       },
     },
     { $project: { adminAuthor: 0, writerAuthor: 0, categoryInfo: 0 } },
@@ -134,6 +137,76 @@ class userController {
       return res.status(200).json({ success: true, count: blogs.length, data: blogs })
     } catch (err) {
       return res.status(500).json({ success: false, message: 'Something went wrong', error: err.message })
+    }
+  }
+
+  async toggleLike(req, res) {
+    try {
+      const { id } = req.params
+      const userId = req.user.userId
+      const blog = await BlogModel.findById(id)
+      if (!blog || blog.status !== 'published') return res.status(404).json({ success: false, message: 'Published blog not found' })
+
+      const index = blog.likes.indexOf(userId)
+      let message = ''
+      if (index === -1) {
+        blog.likes.push(userId)
+        message = 'Blog liked'
+        // Notify Author
+        if (blog.authorModel === 'Writer') {
+          notifyWriter(blog.author.toString(), {
+            type: 'NEW_LIKE',
+            message: `User "${req.user.userName}" liked your blog: "${blog.title}"`,
+            blogId: blog._id,
+          })
+        }
+      } else {
+        blog.likes.splice(index, 1)
+        message = 'Like removed'
+      }
+      await blog.save()
+      return res.status(200).json({ success: true, message, likesCount: blog.likes.length })
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message })
+    }
+  }
+
+  async addComment(req, res) {
+    try {
+      const { id } = req.params
+      const { content } = req.body
+      const userId = req.user.userId
+      const blog = await BlogModel.findById(id)
+      if (!blog || blog.status !== 'published') return res.status(404).json({ success: false, message: 'Published blog not found' })
+
+      const comment = await CommentModel.create({ blogId: id, userId, content })
+      blog.commentCount += 1
+      await blog.save()
+
+      // Notify Author
+      if (blog.authorModel === 'Writer') {
+        notifyWriter(blog.author.toString(), {
+          type: 'NEW_COMMENT',
+          message: `User "${req.user.userName}" commented on your blog: "${blog.title}"`,
+          blogId: blog._id,
+        })
+      }
+
+      return res.status(201).json({ success: true, message: 'Comment added', data: comment })
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message })
+    }
+  }
+
+  async getComments(req, res) {
+    try {
+      const { id } = req.params
+      const comments = await CommentModel.find({ blogId: id })
+        .populate('userId', 'userName')
+        .sort({ createdAt: -1 })
+      return res.status(200).json({ success: true, count: comments.length, data: comments })
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message })
     }
   }
 }
